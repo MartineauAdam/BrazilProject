@@ -28,10 +28,10 @@ of ConfigParser
 config_file = configparser.ConfigParser()
 
 #if no config file is detected we create your own with default value
-if not os.path.exists("cfg/config.ini"):
+if not os.path.exists("/home/pi/BrazilProject/cfg/config.ini"):
 
 	#making a new confing.ini file
-	file = open("cfg/config.ini", "a")
+	file = open("/home/pi/BrazilProject/cfg/config.ini", "a")
 	
 	#writing default value
 	file.write("[ADDRESS]\n" +
@@ -42,14 +42,14 @@ if not os.path.exists("cfg/config.ini"):
 			   "\n" +
 			   "[PATH]\n" +
 			   "usb = /media/pi/Transcend/data.csv\n" +
-			   "local = data/data.csv\n" +
-			   "error = err/errorlog.txt\n")
+			   "local = /home/pi/BrazilProject/data/data.csv\n" +
+			   "error = /home/pi/BrazilProject/err/errorlog.txt\n")
 			   
 	#closing file
 	file.close()
 
 #we read config.ini
-config_file.read("cfg/config.ini")
+config_file.read("/home/pi/BrazilProject/cfg/config.ini")
 
 
 """
@@ -57,8 +57,8 @@ Initialiation
 of errorlog.txt
 """
 #if no error log file is detected we create your own
-if not os.path.exists("err/errorlog.txt"):
-	errorfile_ = open("err/errorlog.txt", "a")
+if not os.path.exists("/home/pi/BrazilProject/err/errorlog.txt"):
+	errorfile_ = open("/home/pi/BrazilProject/err/errorlog.txt", "a")
 	errorfile_.close()
 
 """
@@ -66,8 +66,8 @@ Initialiation
 of data.csv
 """
 #if no data file is detected we create a new one
-if not os.path.exists("data/data.csv"):
-	datafile_ = open("data/data.csv", "a")
+if not os.path.exists("/home/pi/BrazilProject/data/data.csv"):
+	datafile_ = open("/home/pi/BrazilProject/data/data.csv", "a")
 	datafile_.write("TIME; DATE; TEMP; CON; PH; DO; \n")
 	datafile_.close()
 
@@ -79,7 +79,7 @@ from classes
 bus = smbus.SMBus(1)
 
 #classe with all the sub fonction inside
-machine = Control(config_file, bus, i2c)
+machine = Control(config_file, bus)
 
 """
 Initialiation of 
@@ -134,7 +134,7 @@ def main(arg):
 def auto():
 
 	#we wait for the Raspberry Pi to boot
-	time.sleep(30)
+	time.sleep(10)
 	
 	#we save the time and dita in our data file
 	machine.writeData(time.strftime("%H:%M;%d/%m/%Y;"))
