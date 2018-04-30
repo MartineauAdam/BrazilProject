@@ -17,21 +17,23 @@ Bref : The main function of the program is to automatically start when the Raspb
 Environnement : Rasbian Stretch 9.1
 Compilateur : Python 2.7.13
 Materiel : Rasberry Pi zero W
-Revision : V1.1
+Revision : V1.2
 """
+
+#we start be locating our onw path 
+path = os.path.dirname(os.path.abspath(__file__))
 
 """
 Initialiation
 of ConfigParser
 """
-
 config_file = configparser.ConfigParser()
 
 #if no config file is detected we create your own with default value
-if not os.path.exists("/home/pi/BrazilProject/cfg/config.ini"):
+if not os.path.exists(path + "/cfg/config.ini"):
 
 	#making a new confing.ini file
-	file = open("/home/pi/BrazilProject/cfg/config.ini", "a")
+	file = open(path + "/cfg/config.ini", "a")
 	
 	#writing default value
 	file.write("[ADDRESS]\n" +
@@ -42,14 +44,14 @@ if not os.path.exists("/home/pi/BrazilProject/cfg/config.ini"):
 			   "\n" +
 			   "[PATH]\n" +
 			   "usb = /media/usb/data_test.csv\n" +
-			   "local = /home/pi/BrazilProject/data/data.csv\n" +
-			   "error = /home/pi/BrazilProject/err/errorlog.txt\n")
+			   "local = " + path + "/data/data.csv\n" +
+			   "error = " + path + "/err/errorlog.txt\n")
 			   
 	#closing file
 	file.close()
 
 #we read config.ini
-config_file.read("/home/pi/BrazilProject/cfg/config.ini")
+config_file.read(path + "/cfg/config.ini")
 
 
 """
@@ -57,29 +59,29 @@ Initialiation
 of errorlog.txt
 """
 #if no error log file is detected we create your own
-if not os.path.exists("/home/pi/BrazilProject/err/errorlog.txt"):
-	errorfile_ = open("/home/pi/BrazilProject/err/errorlog.txt", "a")
+if not os.path.exists(config_file.get("PATH", "ERROR")):
+	errorfile_ = open(config_file.get("PATH", "ERROR"), "a")
 	errorfile_.close()
 
 """
 Initialiation 
-of data.csv
+of local data file 
 """
 #if no data file is detected we create a new one
-if not os.path.exists("/home/pi/BrazilProject/data/data.csv"):
-	datafile_ = open("/home/pi/BrazilProject/data/data.csv", "a")
+if not os.path.exists(config_file.get("PATH", "LOCAL")):
+	datafile_ = open(config_file.get("PATH", "LOCAL"), "a")
 	datafile_.write("TIME; DATE; TEMP; CON; PH; DO; \n")
 	datafile_.close()
-
+	
 """
-Making of object
-from classes
+Initialiation 
+of a usb data file 
 """
-#making of a object to communicate on the I2C bus
-bus = smbus.SMBus(1)
-
-#classe with all the sub fonction inside
-machine = Control(config_file, bus)
+#if no data file is detected we create a new one
+if not os.path.exists(config_file.get("PATH", "USB")):
+	datafile_ = open(config_file.get("PATH", "USB"), "a")
+	datafile_.write("TIME; DATE; TEMP; CON; PH; DO; \n")
+	datafile_.close()
 
 """
 Initialiation of 
@@ -90,9 +92,17 @@ addressTEMP = config_file.getint("ADDRESS", "TEMP")
 addressCON = config_file.getint("ADDRESS", "CON")
 addressPH = config_file.getint("ADDRESS", "PH")
 addressDO = config_file.getint("ADDRESS", "DO")
-
 #a usefull list containing all the address of the EZO chips
 address = [addressTEMP, addressCON, addressPH, addressDO]
+
+"""
+Making of object
+from classes
+"""
+#making of a object to communicate on the I2C bus
+bus = smbus.SMBus(1)
+#classe with all the sub fonction inside
+machine = Control(config_file, bus)
 
 #variables to save data for later compensation
 _Temperature = 0.00
