@@ -207,7 +207,7 @@ class Control(object):
 				print("\033[1;37;41m" + "Wrong input" + "\033[1;32;40m")
 
 
-		with open("config.ini", "w") as file:
+		with open("/cfg/config.ini", "w") as file:
 			self.config_file.write(file)
 
 	"""
@@ -243,7 +243,7 @@ class Control(object):
 			else:
 				print("\033[1;37;41m" + "Wrong input" + "\033[1;32;40m")
 
-		with open("config.ini", "w") as file:
+		with open("/cfg/config.ini", "w") as file:
 			self.config_file.write(file)
 
 	"""
