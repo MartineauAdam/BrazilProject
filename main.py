@@ -41,7 +41,7 @@ if not os.path.exists("/home/pi/BrazilProject/cfg/config.ini"):
 			   "temp = 102\n" +
 			   "\n" +
 			   "[PATH]\n" +
-			   "usb = /media/pi/Transcend/data.csv\n" +
+			   "usb = /media/usb/data_test.csv\n" +
 			   "local = /home/pi/BrazilProject/data/data.csv\n" +
 			   "error = /home/pi/BrazilProject/err/errorlog.txt\n")
 			   
@@ -94,6 +94,7 @@ addressDO = config_file.getint("ADDRESS", "DO")
 #a usefull list containing all the address of the EZO chips
 address = [addressTEMP, addressCON, addressPH, addressDO]
 
+#variables to save data for later compensation
 _Temperature = 0.00
 _DivolvedOxy = 0.00
 
@@ -111,6 +112,7 @@ def main(arg):
 		print("The program need a argument to start, please use the following arguments:")
 		print("Auto : the standar programe, take measures and save them on a USB key")
 		print("Config : change the I2C address of the EZO chips or the path were measures are saved")
+		print("Test : takes 10 reading to be sur everything is working")
 
 	#if the arg "auto" is used to start the scrip, we take measures
 	elif arg.upper() == "AUTO":
@@ -119,6 +121,9 @@ def main(arg):
 	#if the arg "config" is used to start the scrip, we lunch the user interface
 	elif arg.upper() == "CONFIG":
 		config()
+		
+	elif arg.upper() == "TEST":
+		test()
 		
 	else :
 		print("Wrong argument")
@@ -329,6 +334,66 @@ def manual():
 	for adr in address:
 		machine.Sleep(True, adr)
 
+"""
+@Name : test()
+@Brief : fonction called for the testing, takes 10 readings
+@Input arg : n/a
+@Return : n/a
+"""
+def test():
+	for x in range(0, 10):
+		#we save the time and dita in our data file
+		machine.writeData(time.strftime("%H:%M;%d/%m/%Y;"))
+		
+		#we do the "for" loop for all the sensors in the "address" list
+		for i in range(0, 4):
+			adr = address[i]
+			
+			#waking up the EZO from sleep
+			machine.Sleep(False, adr)
+			
+			#we need to take 16 reading after the wake up to be sure the reading are accurate
+			for i in range(16):
+				machine.write(adr, "r", 0.9)
+			
+			"""
+			Temprature and salinity compensation
+			"""
+			if adr == config_file.getint("ADDRESS", "CON"):
+				machine.write(adr, "T," + _Temperature, 0.3)
+			elif adr == config_file.getint("ADDRESS", "PH"):
+				machine.write(adr, "T," + _Temperature, 0.3)
+			elif adr == config_file.getint("ADDRESS", "DO"):
+				machine.write(adr, "T," + _Temperature, 0.3)
+				machine.write(adr, "S," + _DivolvedOxy, 0.3)
+			
+			"""
+			we send the char "R" to read once the 
+			sensor to take a reading
+			"""
+			machine.write(adr, "r", 0.9)
+
+			#we read back the answer from the EZO circuit
+			buffer = machine.read(adr)
+			
+			#the EZO circuit is put back to sleep
+			machine.Sleep(True, adr)
+			
+			#we save the reading in the usb key
+			machine.writeData(str(buffer) + ";")
+			
+			"""
+			Saving temprature and salinity
+			for compensation later 
+			"""
+			if adr == config_file.getint("ADDRESS", "TEMP"):
+				_Temperature = buffer
+			elif adr == config_file.getint("ADDRESS", "CON"):
+				_DivolvedOxy = buffer
+		
+		#adding a space between all readings
+		machine.writeData("\n")
+		
 """
 @Name : printMenu()
 @Brief : Print our configuration menu.

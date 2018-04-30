@@ -12,7 +12,6 @@ class Control(object):
 	def __init__(self, config_file, bus):
 		self.config_file = config_file
 		self.bus = bus
-		self.i2c = i2c
 		
 	"""
 	@Name : clear()
@@ -57,20 +56,20 @@ class Control(object):
 	@Return : the answer from the EZO circuit
 	"""
 	def read(self, adr):
-		input = []
+		buffer = []
 		output = ""
 		
 		try :
-			input = self.bus.read_i2c_block_data(adr ,0)
+			buffer = self.bus.read_i2c_block_data(adr ,0)
 		except Exception as e:
 			errorFile = open(self.config_file.get("PATH", "ERROR"), "a")
 			errorFile.write(str(e) + " : " + time.strftime("%H:%M;%d/%m/%Y") + "\n")
 			errorFile.close()
 		
 		#we convert a list of int to a string
-		input[0] = 0 #we don't read the first char
+		buffer[0] = 0 #we don't read the first char
 		
-		for i in input:
+		for i in buffer:
 			i &= 0x7F
 			output += chr(i)
 
@@ -244,7 +243,7 @@ class Control(object):
 			else:
 				print("\033[1;37;41m" + "Wrong input" + "\033[1;32;40m")
 
-		with open("config.ini", "wb") as file:
+		with open("config.ini", "w") as file:
 			self.config_file.write(file)
 
 	"""
@@ -263,7 +262,6 @@ class Control(object):
 			send = "WAKEUP"
 
 		Buffer = []
-		input = ""
 
 		#we send our string
 		for i in range(len(send)):
@@ -318,19 +316,19 @@ class Control(object):
 	def cal_temp(self):
 		while True:
 			print("Selecte between :\n\r(1)Calibration\n\r(2)Clear calibration data\n\r")
-			input = input("Select a calibration option(1~2), enter the \"q\" command to exit:")
+			buffer = input("Select a calibration option(1~2), enter the \"q\" command to exit:")
 			
-			if input == "q":
+			if buffer == "q":
 				break
 			
 			#one point calibration 
-			elif input == "1":
+			elif buffer == "1":
 				temp = input("Enter the calibration temperature :")
 				#writing the calibration to the sensor 
-				self.write(config_file.getint("ADDRESS", buffer_input.upper()), "Cal," + temp, 0.9)
+				self.write(self.config_file.getint("ADDRESS", "TEMP"), "Cal," + temp, 0.9)
 			
 			#clear calibration data
-			elif input == "2":
+			elif buffer == "2":
 				self.cal_clear("TEMP")
 	
 	"""
@@ -344,14 +342,14 @@ class Control(object):
 			self.clear()
 			print("A dry calibration " + "\033[1;37;41m" + "WILL" + "\033[1;32;40m" + " be done in the calibration step when doing any other calibration\n\r")
 			print("Selecte between :\n\r(1)One point calibration\n\r(2)Two points calibration\n\r(3)Clear calibration data\n\r")
-			input = input("Select a calibration (1~4), enter the \"q\" command to exit:")
+			buffer = input("Select a calibration (1~4), enter the \"q\" command to exit:")
 			print("")
 			
-			if input == "q":
+			if buffer == "q":
 				break
 			
 			#one point calibration 
-			elif input == "1":
+			elif buffer == "1":
 				print("First will need to do a dry calibration")
 				print("Make sur the probe is " + "\033[1;37;41m" + "DRY" + "\033[1;32;40m")
 				#waiting for user
@@ -372,7 +370,7 @@ class Control(object):
 				self.write(self.config_file.getint("ADDRESS", "CON"), "Cal,one," + cal_value, 1.3)
 			
 			#one point calibration 
-			elif input == "2":
+			elif buffer == "2":
 				print("First will need to do a dry calibration")
 				print("\033[1;37;41m" + "Make sur the probe is DRY" + "\033[1;32;40m")
 				#waiting for user
@@ -402,7 +400,7 @@ class Control(object):
 				#writing the calibration to the sensor 
 				self.write(self.config_file.getint("ADDRESS", "CON"), "Cal,high," + cal_value, 1.3)
 				
-			elif input == "3":
+			elif buffer == "3":
 				self.cal_clear("CON")
 	
 	"""
@@ -416,14 +414,14 @@ class Control(object):
 			self.clear()
 			print("A MIDPOINT calibration MUST be done before any other calibration\n\r")
 			print("Selecte between :\n\r(1)Midpoint calibration\n\r(2)Lowpoint calibration\n\r(3)Highpoint calibration\n\r(4)Clear calibration data\n\r")
-			input = input("Select a calibration (1~4), enter the \"q\" command to exit:")
+			buffer = input("Select a calibration (1~4), enter the \"q\" command to exit:")
 			print("")
 			
-			if input == "q":
+			if buffer == "q":
 				break
 			
 			#midpoint calibration
-			elif input == "1":
+			elif buffer == "1":
 				print("Enter the midpoint calibration value,\n\rexpressed in ph, should be 7.XX")
 				#taking user input
 				cal_value = input("Midpoint value: ")
@@ -435,7 +433,7 @@ class Control(object):
 				self.write(self.config_file.getint("ADDRESS", "PH"), "Cal,mid," + cal_value, 1.6)
 			
 			#lowpoint calibration
-			elif input == "2":
+			elif buffer == "2":
 				print("Enter the lowpoint calibration value,\n\rexpressed in ph (1~14)")
 				#taking user input
 				cal_value = input("Lowpoint value: ")
@@ -447,7 +445,7 @@ class Control(object):
 				self.write(self.config_file.getint("ADDRESS", "PH"), "Cal,low," + cal_value, 1.6)
 			
 			#hight point
-			elif input == "3":
+			elif buffer == "3":
 				print("Enter the highpoint calibration value,\n\rexpressed in ph (1~14)")
 				#taking user input
 				cal_value = input("Highpoint value: ")
@@ -459,7 +457,7 @@ class Control(object):
 				self.write(self.config_file.getint("ADDRESS", "PH"), "Cal,high," + cal_value, 1.6)
 			
 			#clear calibration data 
-			elif input == "4":
+			elif buffer == "4":
 				self.cal_clear("PH")
 				
 	"""
@@ -473,13 +471,13 @@ class Control(object):
 			self.clear()
 			print("A dry calibration can be done for the calibration, the 0 dissolved oxygen is optional\n\r")
 			print("Selecte between :\n\r(1)Dry calibration\n\r(2)0 dissolved oxygen\n\r(3)Clear calibration data\n\r")
-			input = input("Select a calibration (1~3), enter the \"q\" command to exit:")
+			buffer = input("Select a calibration (1~3), enter the \"q\" command to exit:")
 			print("")
 			
-			if input == "q":
+			if buffer == "q":
 				break
 				
-			elif input == "1":
+			elif buffer == "1":
 				print("Let the probe in the air")
 				#waiting for user
 				input("Press enter when ready to calibrate")
@@ -487,7 +485,7 @@ class Control(object):
 				#writing the calibration to the sensor 
 				self.write(self.config_file.getint("ADDRESS", "DO"), "Cal", 1.3)
 			
-			elif input == "2":
+			elif buffer == "2":
 				print("Insert the probe in the 0 dissolved oxygen calibration liquide")
 				#waiting for user
 				input("Press enter when ready to calibrate")
@@ -495,7 +493,7 @@ class Control(object):
 				#writing the calibration to the sensor 
 				self.write(self.config_file.getint("ADDRESS", "DO"), "Cal,0", 1.3)
 			
-			elif input == "3":
+			elif buffer == "3":
 				self.cal_clear("DO")
 	
 	"""
