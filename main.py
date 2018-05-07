@@ -1,11 +1,3 @@
-import smbus
-import time
-import os
-import sys
-import configparser
-
-from cls.control import Control
-
 """
 @package docstring
 File name : testAuto.py
@@ -20,8 +12,29 @@ Materiel : Rasberry Pi zero W
 Revision : V1.2
 """
 
-#we start be locating our onw path 
-path = os.path.dirname(os.path.abspath(__file__))
+
+###################
+###___IMPORTS___###
+###################
+
+import smbus
+import time
+import os
+import sys
+import configparser
+from cls.control import Control
+
+
+############################
+###___SOURCE_DIRECTORY___###
+############################
+
+os.chdir("/home/pi/brazilproject")
+
+
+######################################
+###___CONFIG_FILE_INITIALIZATION___###
+######################################
 
 """
 Initialiation
@@ -30,10 +43,10 @@ of ConfigParser
 config_file = configparser.ConfigParser()
 
 #if no config file is detected we create your own with default value
-if not os.path.exists(path + "/cfg/config.ini"):
+if not os.path.exists("cfg/config.ini"):
 
 	#making a new confing.ini file
-	file = open(path + "/cfg/config.ini", "a")
+	file = open("cfg/config.ini", "a")
 	
 	#writing default value
 	file.write("[ADDRESS]\n" +
@@ -43,15 +56,42 @@ if not os.path.exists(path + "/cfg/config.ini"):
 			   "temp = 102\n" +
 			   "\n" +
 			   "[PATH]\n" +
-			   "usb = /media/usb/data_test.csv\n" +
-			   "local = " + path + "/data/data.csv\n" +
-			   "error = " + path + "/err/errorlog.txt\n")
+			   "usb = /media/usb0/data.csv\n" +
+			   "local = data/data.csv\n" +
+			   "error = err/errorlog.txt\n")
 			   
 	#closing file
 	file.close()
 
 #we read config.ini
-config_file.read(path + "/cfg/config.ini")
+config_file.read("cfg/config.ini")
+
+
+######################
+###___GLOBAL_VAR___###
+######################
+
+#making of a object to communicate on the I2C bus
+bus = smbus.SMBus(1)
+#classe with all the sub fonction inside
+machine = Control(config_file, bus)	
+
+
+###############################
+###___FILE_INITIALIZATION___###
+###############################
+
+"""
+Reading of the I2C address 
+from the config file
+"""
+#all the address of the used EZO circuit, those can be changed in the user interface
+addressTEMP = config_file.getint("ADDRESS", "TEMP")
+addressCON = config_file.getint("ADDRESS", "CON")
+addressPH = config_file.getint("ADDRESS", "PH")
+addressDO = config_file.getint("ADDRESS", "DO")
+#a usefull list containing all the address of the EZO chips
+address = [addressTEMP, addressCON, addressPH, addressDO]
 
 
 """
@@ -78,36 +118,20 @@ Initialiation
 of a usb data file 
 """
 #if no data file is detected we create a new one
-if not os.path.exists(config_file.get("PATH", "USB")):
-	datafile_ = open(config_file.get("PATH", "USB"), "a")
-	datafile_.write("TIME; DATE; TEMP; CON; PH; DO; \n")
-	datafile_.close()
+if machine.is_usb():
+	if not os.path.exists(config_file.get("PATH", "USB")):
+		datafile_ = open(config_file.get("PATH", "USB"), "a")
+		datafile_.write("TIME; DATE; TEMP; CON; PH; DO; \n")
+		datafile_.close()
+else:
+	errorFile = open(config_file.get("PATH", "error"), "a")
+	errorFile.write("NO USB STRORAGE DETECTED" + " : " + time.strftime("%H:%M;%d/%m/%Y") + "\n")
+	errorFile.close()
 
-"""
-Initialiation of 
-I2C addresses
-"""
-#all the address of the used EZO circuit, those can be changed in the user interface
-addressTEMP = config_file.getint("ADDRESS", "TEMP")
-addressCON = config_file.getint("ADDRESS", "CON")
-addressPH = config_file.getint("ADDRESS", "PH")
-addressDO = config_file.getint("ADDRESS", "DO")
-#a usefull list containing all the address of the EZO chips
-address = [addressTEMP, addressCON, addressPH, addressDO]
-
-"""
-Making of object
-from classes
-"""
-#making of a object to communicate on the I2C bus
-bus = smbus.SMBus(1)
-#classe with all the sub fonction inside
-machine = Control(config_file, bus)
-
-#variables to save data for later compensation
-_Temperature = 0.00
-_DivolvedOxy = 0.00
-
+	
+################
+###___MAIN___###
+################
 """
 @Name : main()
 @Brief : point of the start for the program
@@ -139,6 +163,10 @@ def main(arg):
 		print("Wrong argument")
 		
 
+##########################
+###___MAIN_FOUNCTION___###
+##########################		
+
 """
 @Name : auto()
 @Brief : fonction called for the automatic part of the programe
@@ -147,7 +175,10 @@ def main(arg):
 @Return : n/a
 """
 def auto():
-
+	#variables to save data for later compensation
+	Temperature = 0.00
+	WaterSal = 0.00
+	
 	#we wait for the Raspberry Pi to boot
 	time.sleep(10)
 	
@@ -157,7 +188,7 @@ def auto():
 	#we do the "for" loop for all the sensors in the "address" list
 	for i in range(0, 4):
 		adr = address[i]
-		
+
 		#waking up the EZO from sleep
 		machine.Sleep(False, adr)
 		
@@ -169,12 +200,12 @@ def auto():
 		Temprature and salinity compensation
 		"""
 		if adr == config_file.getint("ADDRESS", "CON"):
-			machine.write(adr, "T," + _Temperature, 0.3)
+			machine.write(adr, "T," + Temperature, 0.3)
 		elif adr == config_file.getint("ADDRESS", "PH"):
-			machine.write(adr, "T," + _Temperature, 0.3)
+			machine.write(adr, "T," + Temperature, 0.3)
 		elif adr == config_file.getint("ADDRESS", "DO"):
-			machine.write(adr, "T," + _Temperature, 0.3)
-			machine.write(adr, "S," + _DivolvedOxy, 0.3)
+			machine.write(adr, "T," + Temperature, 0.3)
+			machine.write(adr, "S," + WaterSal, 0.3)
 		
 		"""
 		we send the char "R" to read once the 
@@ -214,7 +245,7 @@ def config():
 
 	#we print the menu
 	print("\033[1;32;40m")
-	machine.clear()
+	print("")
 	printMenu()
 	
 	#Main loop
@@ -241,14 +272,14 @@ def config():
 		
 		#(4) Probe calibration
 		elif menuInput == "4":
-			machine.clear()
+			print("")
 			machine.calibration()
 			printMenu()
 		
 		#(5) Send custum command to the EZO circuit
 		elif menuInput == "5":
 			manual()
-			machine.clear()
+			print("")
 			printMenu()
 		
 		#(6) Read the config file
@@ -262,7 +293,7 @@ def config():
 		
 		#else the input do not conform with our options
 		else :
-			machine.clear()
+			print("")
 			print("\033[1;37;41m" + "Wrong input" + "\033[1;32;40m")
 			printMenu()	
 			
@@ -278,7 +309,7 @@ def manual():
 	#we adjust the color of the text
 	print("\033[1;32;40m")
 
-	machine.clear()
+	print("")
 	print("Warning!!! When comming out of sleep, the EZO chip")
 	print("need 16 dummy readings to be be accurate again\n\r")
 	print("\033[1;37;41m" + "All reading are RAW !!! \n\r" + "\033[1;32;40m")
@@ -327,14 +358,15 @@ def manual():
 			
 			#read the answer from the sensor
 			try:
-				buffer = bus.read_i2c_block_data(controlAdr, 0)
-			except Exeption as e:
+				inflow = []
+				inflow = bus.read_i2c_block_data(controlAdr, 0)
+			except Exception as e:
 				print("Can't communicate at the selected address")
 
 			#we convert a list of int to a string
 			output = ""
-			buffer[0] = 0
-			for i in buffer:
+			inflow[0] = 0
+			for i in inflow:
 				i &= 0x7F
 				output = output + chr(i)
 			
@@ -441,7 +473,9 @@ def printMenu():
 	print("(6) Read the config file									")
 	print("(7) Quit and save										")
 	print("															")
-		
+
+	
+	
 #Entry point of the program, calls out main()
 if __name__ == '__main__':
 

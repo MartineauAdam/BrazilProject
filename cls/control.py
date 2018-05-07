@@ -1,5 +1,7 @@
 import os
 import time
+import subprocess
+import io
 
 class Control(object):
 	
@@ -14,15 +16,6 @@ class Control(object):
 		self.bus = bus
 		
 	"""
-	@Name : clear()
-	@Brief : clears the console
-	@Input arg : n/a
-	@Return : n/a
-	"""
-	def clear(self):
-		os.system('clear' if os.name == 'nt' else 'clear')
-		
-	"""
 	@Name : write()
 	@Brief : write any int to the EZO circuit
 	@Input arg : (int) address : the address of the EZO circuit we want to write to
@@ -30,6 +23,8 @@ class Control(object):
 	@Return : n/a
 	"""
 	def write(self, address, string, delay):
+		r = True
+		
 		try:
 			#we send the commend over I2C
 			buffer = []
@@ -43,11 +38,13 @@ class Control(object):
 			time.sleep(delay)#we wait for the sensor to compute our command
 			
 		except Exception as e:
-			return_value = False
+			r = False
 			
 			errorFile = open(self.config_file.get("PATH", "error"), "a")
 			errorFile.write(str(e) + " : " + time.strftime("%H:%M;%d/%m/%Y") + "\n")
 			errorFile.close()
+			
+		return r
 	
 	"""
 	@Name : read()
@@ -120,28 +117,25 @@ class Control(object):
 	"""
 	def writeData(self, data):
 		send = data.replace("\x00", "")
-
-		try:
-			usb = open(self.config_file.get("PATH", "usb"), "a")
-			usb.write(data)
-			usb.close()
-			
-		#if the IOError triggered, we want to back up the data localy
-		except IOError as e:
-			localFile = open(self.config_file.get("PATH", "local"), "a")
-			localFile.write(data)
-			localFile.close()
-
-			errorFile = open(self.config_file.get("PATH", "error"), "a")
-			errorFile.write(str(e) + " : " + time.strftime("%H:%M;%d/%m/%Y") + "\n")
-			errorFile.close()
-
-		#if any other error occur, we keep the error in a log file
-		except Expetion as e:
-			errorFile = open(self.config_file.get("PATH", "error"), "a")
-			errorFile.write(str(e) + " : " + time.strftime("%H:%M;%d/%m/%Y") + "\n")
-			errorFile.close()
-
+		
+		if (self.is_usb()):
+			try:
+				usb = open(self.config_file.get("PATH", "usb"), "a")
+				usb.write(data)
+				usb.close()
+			except Expetion as e:
+				errorFile = open(self.config_file.get("PATH", "error"), "a")
+				errorFile.write(str(e) + " : " + time.strftime("%H:%M;%d/%m/%Y") + "\n")
+				errorFile.close()
+		else:
+			try:
+				localFile = open(self.config_file.get("PATH", "local"), "a")
+				localFile.write(data)
+				localFile.close()
+			except Expetion as e:
+				errorFile = open(self.config_file.get("PATH", "error"), "a")
+				errorFile.write(str(e) + " : " + time.strftime("%H:%M;%d/%m/%Y") + "\n")
+				errorFile.close()
 	"""
 	@Name : changeDate()
 	@Brief : print a menu and take the user input to change Rasbian system date and time
@@ -167,10 +161,18 @@ class Control(object):
 		print("")
 		
 		os.system("sudo date -s '" + year + "-" + month + "-" + day + " " + hour + ":" + min + ":" + sec + "'")
-
+		
+		print("")
+		
+		subprocess.Popen(['bash', '-c', '. /home/pi/wittypi/utilities.sh; system_to_rtc'])
+		
+		print("")
+		
 		time.sleep(3)
-
-		self.clear()
+		
+		os.system("sudo rm wittyPi.log")
+		
+		print("")
 
 	"""
 	@Name : changeAdd()
@@ -207,7 +209,7 @@ class Control(object):
 				print("\033[1;37;41m" + "Wrong input" + "\033[1;32;40m")
 
 
-		with open("/cfg/config.ini", "w") as file:
+		with open("./cfg/config.ini", "w") as file:
 			self.config_file.write(file)
 
 	"""
@@ -243,7 +245,7 @@ class Control(object):
 			else:
 				print("\033[1;37;41m" + "Wrong input" + "\033[1;32;40m")
 
-		with open("/cfg/config.ini", "w") as file:
+		with open("./cfg/config.ini", "w") as file:
 			self.config_file.write(file)
 
 	"""
@@ -339,7 +341,7 @@ class Control(object):
 	"""	
 	def cal_con(self):
 		while True:
-			self.clear()
+			print("")
 			print("A dry calibration " + "\033[1;37;41m" + "WILL" + "\033[1;32;40m" + " be done in the calibration step when doing any other calibration\n\r")
 			print("Selecte between :\n\r(1)One point calibration\n\r(2)Two points calibration\n\r(3)Clear calibration data\n\r")
 			buffer = input("Select a calibration (1~4), enter the \"q\" command to exit:")
@@ -411,7 +413,7 @@ class Control(object):
 	"""
 	def cal_ph(self):
 		while True:
-			self.clear()
+			print("")
 			print("A MIDPOINT calibration MUST be done before any other calibration\n\r")
 			print("Selecte between :\n\r(1)Midpoint calibration\n\r(2)Lowpoint calibration\n\r(3)Highpoint calibration\n\r(4)Clear calibration data\n\r")
 			buffer = input("Select a calibration (1~4), enter the \"q\" command to exit:")
@@ -468,7 +470,7 @@ class Control(object):
 	"""
 	def cal_do(self):
 		while True:
-			self.clear()
+			print("")
 			print("A dry calibration can be done for the calibration, the 0 dissolved oxygen is optional\n\r")
 			print("Selecte between :\n\r(1)Dry calibration\n\r(2)0 dissolved oxygen\n\r(3)Clear calibration data\n\r")
 			buffer = input("Select a calibration (1~3), enter the \"q\" command to exit:")
@@ -505,5 +507,17 @@ class Control(object):
 	def cal_clear(self, probe):
 		#writing the calibration to the sensor 
 		self.write(self.config_file.getint("ADDRESS", probe), "Cal,clear", 0.3)
+		print("")
 		print("The clear is done")
 		time.sleep(1)
+		
+	def is_usb(self):
+		r = False
+		
+		proc = subprocess.Popen(["lsblk"], stdout=subprocess.PIPE)
+		for line in io.TextIOWrapper(proc.stdout, encoding="utf-8"):
+			if line.find("/media/usb") != -1:
+				r = True
+				break
+		
+		return r
