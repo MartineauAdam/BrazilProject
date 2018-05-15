@@ -182,6 +182,9 @@ def auto():
 	#we wait for the Raspberry Pi to boot
 	time.sleep(10)
 	
+	#adding a space between all readings
+	machine.writeData("\n")
+	
 	#we save the time and dita in our data file
 	machine.writeData(time.strftime("%H:%M;%d/%m/%Y;"))
 	
@@ -200,12 +203,12 @@ def auto():
 		Temprature and salinity compensation
 		"""
 		if adr == config_file.getint("ADDRESS", "CON"):
-			machine.write(adr, "T," + Temperature, 0.3)
+			machine.write(adr, "T," + str(Temperature), 0.3)
 		elif adr == config_file.getint("ADDRESS", "PH"):
-			machine.write(adr, "T," + Temperature, 0.3)
+			machine.write(adr, "T," + str(Temperature), 0.3)
 		elif adr == config_file.getint("ADDRESS", "DO"):
-			machine.write(adr, "T," + Temperature, 0.3)
-			machine.write(adr, "S," + WaterSal, 0.3)
+			machine.write(adr, "T," + str(Temperature), 0.3)
+			machine.write(adr, "S," + str(WaterSal), 0.3)
 		
 		"""
 		we send the char "R" to read once the 
@@ -231,8 +234,7 @@ def auto():
 		elif adr == config_file.getint("ADDRESS", "CON"):
 			_DivolvedOxy = buffer
 	
-	#adding a space between all readings
-	machine.writeData("\n")
+	#os.system("sudo shutdown now")
 
 
 """
@@ -383,7 +385,10 @@ def manual():
 @Return : n/a
 """
 def test():
-	for x in range(0, 10):
+	for x in range(0, 20):
+		#adding a space between all readings
+		machine.writeData("\n")
+		
 		#we save the time and dita in our data file
 		machine.writeData(time.strftime("%H:%M;%d/%m/%Y;"))
 		
@@ -433,8 +438,6 @@ def test():
 			elif adr == config_file.getint("ADDRESS", "CON"):
 				_DivolvedOxy = buffer
 		
-		#adding a space between all readings
-		machine.writeData("\n")
 		
 """
 @Name : printMenu()

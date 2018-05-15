@@ -164,7 +164,7 @@ class Control(object):
 		
 		print("")
 		
-		subprocess.Popen(['bash', '-c', '. /home/pi/wittypi/utilities.sh; system_to_rtc'])
+		subprocess.Popen(['bash', '-c', '. /home/pi/wittyPi/utilities.sh; system_to_rtc'])
 		
 		print("")
 		
@@ -511,10 +511,19 @@ class Control(object):
 		print("The clear is done")
 		time.sleep(1)
 		
+	"""
+	@Name : is_usb()
+	@Brief : print a menu and take the user input to change a selected path, where data is stored 
+	@Input arg : n/a
+	@Return : n/a
+	"""
 	def is_usb(self):
 		r = False
 		
+		#we start a process to detect all mounted partition
 		proc = subprocess.Popen(["lsblk"], stdout=subprocess.PIPE)
+		
+		#we look for a partition mount in the usb file
 		for line in io.TextIOWrapper(proc.stdout, encoding="utf-8"):
 			if line.find("/media/usb") != -1:
 				r = True
