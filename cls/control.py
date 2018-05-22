@@ -3,26 +3,41 @@ import time
 import subprocess
 import io
 
+"""@package docstring
+File name : control.py
+Auteur : Adam Martineau
+Date : 22/05/2018
+Bref : The main class used by the main.py program, contain all function to 
+	   read/right in the i2c and in local files. Also containe a butch of 
+	   usefull fonction made for our use.
+Environnement : Rasbian Stretch 9.1
+Compilateur : Python 2.7.13
+Materiel : Rasberry Pi zero W
+Revision : V1.2
+"""
+
 class Control(object):
 	
-	"""
-	@Name : __init__()
-	@Brief : the class constructor
-	@Input arg : n/a
-	@Return : n/a
-	"""
 	def __init__(self, config_file, bus):
+		"""
+		@Name : __init__()
+		@Brief : the class constructor
+		@Input arg : n/a
+		@Return : n/a
+		"""
+		
 		self.config_file = config_file
 		self.bus = bus
 		
-	"""
-	@Name : write()
-	@Brief : write any int to the EZO circuit
-	@Input arg : (int) address : the address of the EZO circuit we want to write to
-				 (string) string : the string we want to send trough I2C
-	@Return : n/a
-	"""
 	def write(self, address, string, delay):
+		"""
+		@Name : write()
+		@Brief : write any int to the EZO circuit
+		@Input arg : (int) address : the address of the EZO circuit we want to write to
+					 (string) string : the string we want to send trough I2C
+		@Return : n/a
+		"""
+		
 		r = True
 		
 		try:
@@ -46,13 +61,14 @@ class Control(object):
 			
 		return r
 	
-	"""
-	@Name : read()
-	@Brief : read any EZO circuit
-	@Input arg : (int) address : the address of the EZO circuit
-	@Return : the answer from the EZO circuit
-	"""
 	def read(self, adr):
+		"""
+		@Name : read()
+		@Brief : read any EZO circuit
+		@Input arg : (int) address : the address of the EZO circuit
+		@Return : the answer from the EZO circuit
+		"""
+		
 		buffer = []
 		output = ""
 		
@@ -74,13 +90,14 @@ class Control(object):
 		
 		return output
 		
-	"""
-	@Name : is_number()
-	@Brief : return "true" if the string "n" is purely made out of integer, else return "false"
-	@Input arg : n : the string that need verification 
-	@Return : true or false
-	"""
 	def is_number(self, n):
+		"""
+		@Name : is_number()
+		@Brief : return "true" if the string "n" is purely made out of integer, else return "false"
+		@Input arg : n : the string that need verification 
+		@Return : true or false
+		"""
+	
 		try:
 			#we try to cast the "number" into the integer form
 			int(n)
@@ -91,13 +108,14 @@ class Control(object):
 
 		return True
 	
-	"""
-	@Name : readconfig()
-	@Brief : read and print all the config 
-	@Input arg : n/a
-	@Return : n/a
-	"""
 	def readconfig(self):
+		"""
+		@Name : readconfig()
+		@Brief : read and print all the config 
+		@Input arg : n/a
+		@Return : n/a
+		"""
+		
 		print("EZO circuit address I2C address :")
 		print("	   PH : " + self.config_file.get("ADDRESS", "PH"))
 		print("	   DO : " + self.config_file.get("ADDRESS", "DO"))
@@ -109,13 +127,14 @@ class Control(object):
 		print("	   LOCAL : " + self.config_file.get("PATH", "LOCAL"))
 		print("	   ERROR LOG : " + self.config_file.get("PATH", "ERROR"))	
 
-	"""
-	@Name : save()
-	@Brief : right date to the usb key, if no usb key is detected, we save the date locally
-	@Input arg : (string) data : the data we want to save to the usb key
-	@Return : n/a
-	"""
 	def writeData(self, data):
+		"""
+		@Name : save()
+		@Brief : right date to the usb key, if no usb key is detected, we save the date locally
+		@Input arg : (string) data : the data we want to save to the usb key
+		@Return : n/a
+		"""
+	
 		send = data.replace("\x00", "")
 		
 		if (self.is_usb()):
@@ -136,13 +155,15 @@ class Control(object):
 				errorFile = open(self.config_file.get("PATH", "error"), "a")
 				errorFile.write(str(e) + " : " + time.strftime("%H:%M;%d/%m/%Y") + "\n")
 				errorFile.close()
-	"""
-	@Name : changeDate()
-	@Brief : print a menu and take the user input to change Rasbian system date and time
-	@Input arg : n/a
-	@Return : n/a
-	"""
+	
 	def changeDate(self):
+		"""
+		@Name : changeDate()
+		@Brief : print a menu and take the user input to change Rasbian system date and time
+		@Input arg : n/a
+		@Return : n/a
+		"""
+	
 		print("All input must be numerical")
 		print("")
 
@@ -174,13 +195,14 @@ class Control(object):
 		
 		print("")
 
-	"""
-	@Name : changeAdd()
-	@Brief : print a menu and take the user input to change a selected address
-	@Input arg : n/a
-	@Return : n/a
-	"""
 	def changeAdd(self):
+		"""
+		@Name : changeAdd()
+		@Brief : print a menu and take the user input to change a selected address
+		@Input arg : n/a
+		@Return : n/a
+		"""
+	
 		quit = False
 
 		while quit != True:
@@ -212,13 +234,14 @@ class Control(object):
 		with open("./cfg/config.ini", "w") as file:
 			self.config_file.write(file)
 
-	"""
-	@Name : changePath()
-	@Brief : print a menu and take the user input to change a selected path, where data is stored 
-	@Input arg : n/a
-	@Return : n/a
-	"""
 	def changePath(self):
+		"""
+		@Name : changePath()
+		@Brief : print a menu and take the user input to change a selected path, where data is stored 
+		@Input arg : n/a
+		@Return : n/a
+		"""
+	
 		quit = False
 
 		while quit != True:
@@ -248,15 +271,15 @@ class Control(object):
 		with open("./cfg/config.ini", "w") as file:
 			self.config_file.write(file)
 
-	"""
-	@Name : Sleep()
-	@Brief : Put a EZO chip to sleep or wake it up from sleep.
-	@Input arg : (bollean) state : True or False, define if we put the chip to sleep (True) or wake it up (False)
-				 (string) adr : address of the chip we want to control
-	@Return : n/a
-	"""
 	def Sleep(self, state, adr):
-
+		"""
+		@Name : Sleep()
+		@Brief : Put a EZO chip to sleep or wake it up from sleep.
+		@Input arg : (bollean) state : True or False, define if we put the chip to sleep (True) or wake it up (False)
+					 (string) adr : address of the chip we want to control
+		@Return : n/a
+		"""
+		
 		#we decide what will be send to the sensor
 		if state == True:
 			send = "SLEEP"
@@ -278,13 +301,14 @@ class Control(object):
 
 		time.sleep(0.9)
 	
-	"""
-	@Name : calibration()
-	@Brief : print a menu and take the user input to calibrate the EZO circuit
-	@Input arg : n/a
-	@Return : n/a
-	"""
 	def calibration(self):
+		"""
+		@Name : calibration()
+		@Brief : print a menu and take the user input to calibrate the EZO circuit
+		@Input arg : n/a
+		@Return : n/a
+		"""
+		
 		while True:
 			#under menu 
 			print("Welcome to the calibration menu \n\r")
@@ -309,13 +333,14 @@ class Control(object):
 			else:
 				print("\033[1;37;41m" + "Wrong input" + "\033[1;32;40m")
 	
-	"""
-	@Name : cal_temp()
-	@Brief : calibration of the temperature sensor
-	@Input arg : n/a
-	@Return : n/a
-	"""
 	def cal_temp(self):
+		"""
+		@Name : cal_temp()
+		@Brief : calibration of the temperature sensor
+		@Input arg : n/a
+		@Return : n/a
+		"""
+	
 		while True:
 			print("Selecte between :\n\r(1)Calibration\n\r(2)Clear calibration data\n\r")
 			buffer = input("Select a calibration option(1~2), enter the \"q\" command to exit:")
@@ -333,13 +358,14 @@ class Control(object):
 			elif buffer == "2":
 				self.cal_clear("TEMP")
 	
-	"""
-	@Name : cal_con()
-	@Brief : calibration of the electrical conductivity sensor
-	@Input arg : n/a
-	@Return : n/a
-	"""	
 	def cal_con(self):
+		"""
+		@Name : cal_con()
+		@Brief : calibration of the electrical conductivity sensor
+		@Input arg : n/a
+		@Return : n/a
+		"""	
+	
 		while True:
 			print("")
 			print("A dry calibration " + "\033[1;37;41m" + "WILL" + "\033[1;32;40m" + " be done in the calibration step when doing any other calibration\n\r")
@@ -405,13 +431,14 @@ class Control(object):
 			elif buffer == "3":
 				self.cal_clear("CON")
 	
-	"""
-	@Name : cal_ph()
-	@Brief : calibration of the ph sensor
-	@Input arg : n/a
-	@Return : n/a
-	"""
 	def cal_ph(self):
+		"""
+		@Name : cal_ph()
+		@Brief : calibration of the ph sensor
+		@Input arg : n/a
+		@Return : n/a
+		"""
+		
 		while True:
 			print("")
 			print("A MIDPOINT calibration MUST be done before any other calibration\n\r")
@@ -462,13 +489,14 @@ class Control(object):
 			elif buffer == "4":
 				self.cal_clear("PH")
 				
-	"""
-	@Name : cal_do()
-	@Brief : calibration of the dissolved oxygen sensor 
-	@Input arg : n/a
-	@Return : n/a
-	"""
 	def cal_do(self):
+		"""
+		@Name : cal_do()
+		@Brief : calibration of the dissolved oxygen sensor 
+		@Input arg : n/a
+		@Return : n/a
+		"""
+	
 		while True:
 			print("")
 			print("A dry calibration can be done for the calibration, the 0 dissolved oxygen is optional\n\r")
@@ -498,26 +526,28 @@ class Control(object):
 			elif buffer == "3":
 				self.cal_clear("DO")
 	
-	"""
-	@Name : cal_clear()
-	@Brief : print a menu and take the user input to change a selected path, where data is stored 
-	@Input arg : n/a
-	@Return : n/a
-	"""
 	def cal_clear(self, probe):
+		"""
+		@Name : cal_clear()
+		@Brief : print a menu and take the user input to change a selected path, where data is stored 
+		@Input arg : n/a
+		@Return : n/a
+		"""
+	
 		#writing the calibration to the sensor 
 		self.write(self.config_file.getint("ADDRESS", probe), "Cal,clear", 0.3)
 		print("")
 		print("The clear is done")
 		time.sleep(1)
 		
-	"""
-	@Name : is_usb()
-	@Brief : print a menu and take the user input to change a selected path, where data is stored 
-	@Input arg : n/a
-	@Return : n/a
-	"""
 	def is_usb(self):
+		"""
+		@Name : is_usb()
+		@Brief : print a menu and take the user input to change a selected path, where data is stored 
+		@Input arg : n/a
+		@Return : n/a
+		"""
+		
 		r = False
 		
 		#we start a process to detect all mounted partition

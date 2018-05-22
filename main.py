@@ -1,5 +1,4 @@
-"""
-@package docstring
+"""@package docstring
 File name : testAuto.py
 Auteur : Adam Martineau
 Date : 23/02/2018
@@ -13,9 +12,7 @@ Revision : V1.2
 """
 
 
-###################
-###___IMPORTS___###
-###################
+#___IMPORTS___
 
 import smbus
 import time
@@ -24,17 +21,12 @@ import sys
 import configparser
 from cls.control import Control
 
-
-############################
-###___SOURCE_DIRECTORY___###
-############################
+#___SOURCE_DIRECTORY___
 
 os.chdir("/home/pi/brazilproject")
 
 
-######################################
-###___CONFIG_FILE_INITIALIZATION___###
-######################################
+#___CONFIG_FILE_INITIALIZATION___
 
 """
 Initialiation
@@ -67,9 +59,7 @@ if not os.path.exists("cfg/config.ini"):
 config_file.read("cfg/config.ini")
 
 
-######################
-###___GLOBAL_VAR___###
-######################
+#___GLOBAL_VAR___
 
 #making of a object to communicate on the I2C bus
 bus = smbus.SMBus(1)
@@ -77,9 +67,7 @@ bus = smbus.SMBus(1)
 machine = Control(config_file, bus)	
 
 
-###############################
-###___FILE_INITIALIZATION___###
-###############################
+#___FILE_INITIALIZATION___
 
 """
 Reading of the I2C address 
@@ -129,16 +117,14 @@ else:
 	errorFile.close()
 
 	
-################
-###___MAIN___###
-################
-"""
-@Name : main()
-@Brief : point of the start for the program
-@Input arg : n/a
-@Return : n/a
-"""
+#___MAIN___
 def main(arg):
+	"""
+	@Name : main()
+	@Brief : point of the start for the program
+	@Input arg : n/a
+	@Return : n/a
+	"""
 
 	#--- MAIN SWITCH CASE ---
 	#if no argument is passed
@@ -163,18 +149,16 @@ def main(arg):
 		print("Wrong argument")
 		
 
-##########################
-###___MAIN_FOUNCTION___###
-##########################		
-
-"""
-@Name : auto()
-@Brief : fonction called for the automatic part of the programe
-		 take mesurs on all 4 probes and save the data 
-@Input arg : n/a
-@Return : n/a
-"""
+#___MAIN_FOUNCTION___
 def auto():
+	"""
+	@Name : auto()
+	@Brief : fonction called for the automatic part of the programe
+			 take mesurs on all 4 probes and save the data 
+	@Input arg : n/a
+	@Return : n/a
+	"""
+	
 	#variables to save data for later compensation
 	Temperature = 0.00
 	WaterSal = 0.00
@@ -237,14 +221,14 @@ def auto():
 	#os.system("sudo shutdown now")
 
 
-"""
-@Name : config()
-@Brief : 
-@Input arg : n/a
-@Return : n/a
-"""
 def config():
-
+	"""
+	@Name : config()
+	@Brief : open the configuration menu, all function used are from control.py
+	@Input arg : n/a
+	@Return : n/a
+	"""
+	
 	#we print the menu
 	print("\033[1;32;40m")
 	print("")
@@ -299,14 +283,13 @@ def config():
 			print("\033[1;37;41m" + "Wrong input" + "\033[1;32;40m")
 			printMenu()	
 			
-
-"""
-@Name : man_input()
-@Brief : fonction called to send costum commends to the sensor
-@Input arg : n/a
-@Return : n/a
-"""
 def manual():	
+	"""
+	@Name : man_input()
+	@Brief : fonction called to send costum commends to the sensor
+	@Input arg : n/a
+	@Return : n/a
+	"""
 
 	#we adjust the color of the text
 	print("\033[1;32;40m")
@@ -378,13 +361,14 @@ def manual():
 	for adr in address:
 		machine.Sleep(True, adr)
 
-"""
-@Name : test()
-@Brief : fonction called for the testing, takes 10 readings
-@Input arg : n/a
-@Return : n/a
-"""
 def test():
+	"""
+	@Name : test()
+	@Brief : fonction called for the testing, takes 10 readings
+	@Input arg : n/a
+	@Return : n/a
+	"""
+
 	for x in range(0, 20):
 		#adding a space between all readings
 		machine.writeData("\n")
@@ -438,14 +422,13 @@ def test():
 			elif adr == config_file.getint("ADDRESS", "CON"):
 				_DivolvedOxy = buffer
 		
-		
-"""
-@Name : printMenu()
-@Brief : Print our configuration menu.
-@Input arg : n/a
-@Return : n/a
-"""
 def printMenu():
+	"""
+	@Name : printMenu()
+	@Brief : Print our configuration menu.
+	@Input arg : n/a
+	@Return : n/a
+	"""
 
 	print("        IIIIIII  .d2222b.   .cCCCCc.						")
 	print("          III   d22P  222b cCCP  CCCc					")
