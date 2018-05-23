@@ -297,7 +297,7 @@ def manual():
 	print("")
 	print("Warning!!! When comming out of sleep, the EZO chip")
 	print("need 16 dummy readings to be be accurate again\n\r")
-	print("\033[1;37;41m" + "All reading are RAW !!! \n\r" + "\033[1;32;40m")
+	print("\033[1;37;41m" + "All reading are RAW !!!" + "\033[1;32;40m" + "\n\r")
 	
 	#we wake up all the sensor from sleep
 	for adr in address:
@@ -339,21 +339,25 @@ def manual():
 			if send.upper() == "QUIT":
 				break
 			
-			machine.write(controlAdr, send, 0.9)
+			machine.write(controlAdr, send, 1.3)
 			
 			#read the answer from the sensor
-			try:
-				inflow = []
-				inflow = bus.read_i2c_block_data(controlAdr, 0)
-			except Exception as e:
-				print("Can't communicate at the selected address")
+			inflow = []
+			
+			if send != "sleep":
+				try:
+					inflow = bus.read_i2c_block_data(controlAdr, 0)
+				except Exception as e:
+					print("Can't read at that address")
 
 			#we convert a list of int to a string
 			output = ""
-			inflow[0] = 0
-			for i in inflow:
-				i &= 0x7F
-				output = output + chr(i)
+			
+			if len(inflow) != 0:
+				inflow[0] = 0
+				for i in inflow:
+					i &= 0x7F
+					output = output + chr(i)
 			
 			print("output : " + output)
 			
